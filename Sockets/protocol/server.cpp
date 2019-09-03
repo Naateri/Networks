@@ -40,7 +40,7 @@ void store_nickname(char* msg, int socketFD){ //1 len_nickname nick_name
 	for (auto& x: nicknames) {
 		if (socketFD == x.second){
 			std::cout << "This socket already has a nickname registered.\n";
-			n = write(socketFD, "Your socket has already registered a nickname. Try again.", 57);
+			n = write(socketFD, "Your socket has already registered a nickname. Try again.", 57); //ERROR
 			return;
 		}
 	}
@@ -53,7 +53,7 @@ void store_nickname(char* msg, int socketFD){ //1 len_nickname nick_name
 	}
 	socket_nickname::iterator it = nicknames.find(nickn);
 	if (it != nicknames.end()){
-		n = write(socketFD, "This nickname is already registered. Try again.", 47);
+		n = write(socketFD, "This nickname is already registered. Try again.", 47); //ERROR
 		return;
 	}
 	nicknames.insert(std::pair<str, int>(nickn, socketFD));
@@ -74,9 +74,26 @@ void print_nicknames(int ClientFD){ // 2, also sends them
 void send_msg_client(char* msg, int ConnectFD){
 	//3 nick_size reciever msg_size msg
 	//eg: 06 donald 004 hola
-    int n;
+	int n;
 	str nick_size, nick, msg_size, msge, sender;
 	int nick_sz, msg_sz;
+	bool registered = 0;
+	
+	//checking sender has registered
+	//and also finding who he/she is
+	for(auto& x: nicknames){
+		if (x.second == ConnectFD){
+			sender = x.first;
+			registered = 1;
+			break;
+		}
+	}
+	
+	if (!registered){
+		n = write(ConnectFD, "You are not registered. Please, register first.", 47);
+		return;
+	}
+	
 	nick_size = msg[2];
 	nick_size += msg[3];
 	nick_sz = atoi(nick_size.c_str()); //nick size
@@ -93,23 +110,22 @@ void send_msg_client(char* msg, int ConnectFD){
 	k = i;
 	msg_sz = atoi(msg_size.c_str());
 	
-	//finding who's the sender
-	for(auto& x: nicknames){
-		if (x.second == ConnectFD){
-			sender = x.first;
-			break;
-		}
-	}
-	
 	//getting message
 	msge = sender + "says: ";
 	for(; i < k + msg_sz; i++){
 		msge += msg[i];
 	}
-	n = write(nicknames[nick],msge.c_str(),msge.size());
-	if (n < 0) perror("ERROR writing to socket");
-	std::cout << "Sending message " << msge << " to " << nick << std::endl;
-	n = write(ConnectFD, "Message sent.", 14); //OK
+	
+	socket_nickname::iterator it = nicknames.find(nick);
+	
+	if (it != nicknames.end()){
+		n = write(nicknames[nick],msge.c_str(),msge.size());
+		if (n < 0) perror("ERROR writing to socket");
+		std::cout << "Sending message " << msge << " to " << nick << std::endl;
+		n = write(ConnectFD, "Ok. Message sent.", 18); //OK
+	} else {
+		n = write(ConnectFD, "Nickname not found. Try again.", 30);
+	}
 }
 
 void end_connection(int ConnectFD, bool& end){

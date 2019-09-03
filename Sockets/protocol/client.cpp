@@ -41,7 +41,7 @@ void rcv_msg(){
 	buffer[n] = '\0';
    	//printf("Here is the message: [%s]\n",buffer);
 	printf("[%s]\n",buffer);
-	n = write(SocketFD,"Message recieved.",17); //cuantos bytes estoy mandando
+	n = write(SocketFD,"Ok. Message recieved.",21); 
 	} while(!end);
 }
  
