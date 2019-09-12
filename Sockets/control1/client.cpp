@@ -1,6 +1,18 @@
  /* Client code in C++ */
 
 //g++ client.cpp -o client -std=c++11 -lpthread
+
+/*
+rules:
+send 1 to confirm connection and play
+send 2 position (1-9) to put your play
+*/
+
+/*
+integrantes:
+-Jazmine Alexandra Alfaro Llerena
+-Renato Luis Postigo Avalos
+*/
  
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,6 +30,7 @@
 int SocketFD;
 bool end = false;
 char buffer[256];
+int port = 50000;
 
 void send_msg(){
 	char msg[256];
@@ -40,7 +53,7 @@ void rcv_msg(){
    	if (n < 0) perror("ERROR reading from socket");
 	buffer[n] = '\0';
    	//printf("Here is the message: [%s]\n",buffer);
-	printf("[%s]\n",buffer);
+	printf("%s\n",buffer);
 	n = write(SocketFD,"Ok. Message recieved.",21); 
 	} while(!end);
 }
@@ -61,7 +74,7 @@ int main(void){
     memset(&stSockAddr, 0, sizeof(struct sockaddr_in));
  
     stSockAddr.sin_family = AF_INET;
-    stSockAddr.sin_port = htons(50000); //port
+    stSockAddr.sin_port = htons(port); //port
     Res = inet_pton(AF_INET, "192.168.166.236", &stSockAddr.sin_addr);
  
     if (0 > Res)

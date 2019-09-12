@@ -31,6 +31,8 @@ socket_nickname nicknames;
 #define server_list 6
 #define server_to_client 7
 
+#define maybe_space -1
+
 int SocketFD, Client_connectFD;
 char msg[256];
 
@@ -255,7 +257,7 @@ int main(void){
     memset(&stSockAddr, 0, sizeof(struct sockaddr_in));
 	
     stSockAddr.sin_family = AF_INET;
-    stSockAddr.sin_port = htons(45500);
+    stSockAddr.sin_port = htons(50000);
     stSockAddr.sin_addr.s_addr = INADDR_ANY;
  
     if(-1 == bind(SocketFD,(const struct sockaddr *)&stSockAddr, sizeof(struct sockaddr_in)))
