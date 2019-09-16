@@ -26,12 +26,13 @@
 typedef std::string str;
 
 int SocketFD;
-bool end = false;
 char buffer[256];
 
-int port = 45500;
+int port = 45000;
+str ip = "192.168.1.60";
 
 std::ifstream my_file("photo.txt");
+bool exit_prog = false;
 
 struct User{
 	char name[99];
@@ -56,8 +57,8 @@ struct User{
 
 User Renato;
 
-void send_msg(){ //struct
-	send(SocketFD, &Renato, sizeof(Renato), 0);
+void send_msg_struct(int ConnectFD){ //struct
+	send(ConnectFD, &Renato, sizeof(Renato), 0);
 	printf("Message sent\n");
 }
 
@@ -71,7 +72,7 @@ void send_orientado_comandos(int ConnectFD){
 	command += "dni 72221876\n";
 	command += "address Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2\n";
 	command += "profession Computer Science\n";
-	command += "bio Peruvian computer science student. Currently taking the networks and communication course.\n";
+	command += "bio Peruvian computer science student. Currently taking the networks and communications course.\n";
 	n = write(ConnectFD, command.c_str(), command.size());
 }
 
@@ -92,13 +93,76 @@ void send_XML(int ConnectFD){
 	str my_obj;
 	my_obj = "<User>\n";
 	my_obj += "<name>Renato</name>\n";
-	my_obj += "<surname>L.</surname>\n";
-	my_obj += "<dob>281292</dob>\n";
+	my_obj += "<initial>L.</initial>\n";
+	my_obj += "<surname>Postigo Avalos</surname>\n";
+	my_obj += "<dob>281298</dob>\n";
 	my_obj += "<dni>72221876</dni>\n";
 	my_obj += "<address>Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2</address>\n";
-	my_obj += "<profession>Computer Science</profession>";
-	my_obj += "<bio>Peruvian computer science student. Currently taking the networks and communication course.</bio>";
+	my_obj += "<profession>Computer Science</profession>\n";
+	my_obj += "<bio>Peruvian computer science student. Currently taking the networks and communications course.</bio>";
 	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
+}
+
+void send_csv(int ConnectFD){
+	str my_obj;
+	my_obj += "Renato,L.,Postigo Avalos,281298,72221876";
+	my_obj += ",Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2,Computer Science";
+	my_obj += ",Peruvian computer science student. Currently taking the networks and communications course.";
+	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
+}
+
+void send_orientado_estruct(int ConnectFD){
+	str my_obj;
+	my_obj += "006 Renato\n";
+	my_obj += "02 L.\n";
+	my_obj += "014 Postigo Avalos\n";
+	my_obj += "1 281298\n";
+	my_obj += "72221876\n";
+	my_obj += "044 Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2\n";
+	my_obj += "0\n";
+	my_obj += "091 Peruvian computer science student. Currently taking the networks and communications course.\n";
+	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
+}
+
+void send_msg(int ConnectFD){
+	int n;
+	str sign;
+	char buffer[5];
+	std::cout << "Ingrese un numero segun el caso\n";
+	std::cout << "1. Struct completo.\n2. Orientado a comandos.\n3.Orientado a estructuras.\n";
+	std::cout << "4. JSON\n5.XML\n6.CSV\n";
+	do{
+	std::cin >> n;
+	sign = std::to_string(n);
+	write(ConnectFD, sign.c_str(), sign.size());
+	read(ConnectFD, buffer, 5); 
+	buffer[n] = '\0';
+	printf("Server: [%s]\n", buffer);
+	switch(n){
+	case 1:
+		send_msg_struct(ConnectFD);
+		break;
+	case 2:
+		printf("Sending orientado a comandos\n");
+		send_orientado_comandos(ConnectFD);
+		break;
+	case 3:
+		send_orientado_estruct(ConnectFD);
+		break;
+	case 4:
+		send_JSON(ConnectFD);
+		break;
+	case 5:
+		send_XML(ConnectFD);
+		break;
+	case 6:
+		send_csv(ConnectFD);
+		break;
+	case 7:
+		exit_prog = true;
+		break;
+	}
+	}while(!exit_prog);
 }
 
 void rcv_msg(){
@@ -111,7 +175,7 @@ void rcv_msg(){
    	//printf("Here is the message: [%s]\n",buffer);
 	printf("[%s]\n",buffer);
 	n = write(SocketFD,"Ok. Message recieved.",21); 
-	} while(!end);
+	} while(1);
 }
  
 int main(void){
@@ -121,7 +185,7 @@ int main(void){
 	strcpy(Renato.DOB, "1 281298");
 	strcpy(Renato.address, "Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2");	
 	strcpy(Renato.profession, "Computer Science");
-	strcpy(Renato.bio, "Peruvian computer science student. Currently taking the networks and communication course.");
+	strcpy(Renato.bio, "Peruvian computer science student. Currently taking the networks and communications course.");
 	Renato.DNI = 72221876;
 	
 	str temp_photo;
@@ -146,7 +210,7 @@ int main(void){
  
     stSockAddr.sin_family = AF_INET;
     stSockAddr.sin_port = htons(port); //port
-    Res = inet_pton(AF_INET, "192.168.199.92", &stSockAddr.sin_addr);
+    Res = inet_pton(AF_INET, ip.c_str(), &stSockAddr.sin_addr);
  
     if (0 > Res)
     {
@@ -171,7 +235,14 @@ int main(void){
 	
 	//send_msg();
 	//send_orientado_comandos(SocketFD);
-	send_JSON(SocketFD);
+	//send_JSON(SocketFD);
+	//send_XML(SocketFD);
+	//send_csv(SocketFD);
+	//send_orientado_estruct(SocketFD);
+	
+	/*std::thread t1(send_msg, SocketFD);
+	t1.join();*/
+	send_msg(SocketFD);
 	
     shutdown(SocketFD, SHUT_RDWR);
  
