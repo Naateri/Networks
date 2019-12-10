@@ -2,12 +2,15 @@
 
 //g++ client.cpp -o client -std=c++11 -lpthread
 
-//1: struct
-//2: orientado a estructuras
-//3: orientado a comandos
-//4: JSON
-//5: XML
-//6: CSV
+//All 6 structures included
+
+//1: orientado a estructuras
+//2: orientado a comandos
+//3: JSON
+//4: XML
+//5: CSV
+//6: struct
+//7: exit program
  
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -29,9 +32,8 @@ int SocketFD;
 char buffer[256];
 
 int port = 45000;
-str ip = "192.168.1.60";
-
-std::ifstream my_file("photo.txt");
+str ip = "192.168.1.62";
+str photo = "snoo.txt";
 bool exit_prog = false;
 
 struct User{
@@ -43,6 +45,7 @@ struct User{
 	char profession[99];
 	char bio[999];
 	char photo[300000];
+	char photo_name[99];
 	
 	unsigned int DNI;
 	
@@ -52,15 +55,34 @@ struct User{
 		printf("Address: %s\n", this->address);
 		printf("Profession: %s\n", this->profession);
 		printf("Bio: %s\n", this->bio);
+		printf("Photo name: %s\n", this->photo_name);
 	}
 };
 
 User Renato;
 
+/*
+--------------
+---------------
+Struct
+----------------
+---------------
+*/
+
 void send_msg_struct(int ConnectFD){ //struct
 	send(ConnectFD, &Renato, sizeof(Renato), 0);
 	printf("Message sent\n");
 }
+
+/*
+--------------
+---------------
+ORIENTADO
+	A
+		COMANDOS
+----------------
+---------------
+*/
 
 void send_orientado_comandos(int ConnectFD){
 	str command;
@@ -73,11 +95,32 @@ void send_orientado_comandos(int ConnectFD){
 	command += "address Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2\n";
 	command += "profession Computer Science\n";
 	command += "bio Peruvian computer science student. Currently taking the networks and communications course.\n";
+	command += "photo_name snoo.png\n";
+	command += "photo ";
+	str temp_photo;
+	std::ifstream my_file(photo.c_str());
+	
+	getline(my_file, temp_photo);
+	
+	command += temp_photo;
+	command += "\n";
+	
+	//my_file.close();
+	
 	n = write(ConnectFD, command.c_str(), command.size());
 }
 
+/*
+--------------
+---------------
+JSON
+----------------
+---------------
+*/
+
 void send_JSON(int ConnectFD){
 	str my_obj;
+	str temp_photo;
 	my_obj = "{\"name\":\"Renato\",";
 	my_obj += "\"initial\":\"L.\",";
 	my_obj += "\"surname\":\"Postigo Avalos\",";
@@ -85,9 +128,26 @@ void send_JSON(int ConnectFD){
 	my_obj += "\"dni\":\"72221876\",";
 	my_obj += "\"address\":\"Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2\",";
 	my_obj += "\"profession\":\"Computer Science\",";
-	my_obj += "\"bio\":\"Peruvian computer science student. Currently taking the networks and communication course.\"}";
+	my_obj += "\"bio\":\"Peruvian computer science student. Currently taking the networks and communication course.\",";
+	my_obj += "\"photo_name\":\"snoo.png\",\"photo\":\"";
+	
+	std::ifstream my_file(photo.c_str());
+	
+	getline(my_file, temp_photo);
+	
+	my_obj += temp_photo;
+	my_obj += "\"}\n";
+	
 	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
 }
+
+/*
+--------------
+---------------
+XML
+----------------
+---------------
+*/
 
 void send_XML(int ConnectFD){
 	str my_obj;
@@ -99,17 +159,54 @@ void send_XML(int ConnectFD){
 	my_obj += "<dni>72221876</dni>\n";
 	my_obj += "<address>Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2</address>\n";
 	my_obj += "<profession>Computer Science</profession>\n";
-	my_obj += "<bio>Peruvian computer science student. Currently taking the networks and communications course.</bio>";
+	my_obj += "<bio>Peruvian computer science student. Currently taking the networks and communications course.</bio>\n";
+	my_obj += "<photo_name>snoo.png</photo_name>\n";
+	my_obj += "<photo>";
+		
+	str temp_photo;
+	std::ifstream my_file(photo.c_str());
+	
+	getline(my_file, temp_photo);
+	my_obj += temp_photo;
+	my_obj += "</photo>";
+	
 	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
 }
+
+/*
+--------------
+---------------
+CSV
+----------------
+---------------
+*/
 
 void send_csv(int ConnectFD){
 	str my_obj;
 	my_obj += "Renato,L.,Postigo Avalos,281298,72221876";
 	my_obj += ",Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2,Computer Science";
-	my_obj += ",Peruvian computer science student. Currently taking the networks and communications course.";
+	my_obj += ",Peruvian computer science student. Currently taking the networks and communications course.,";
+	my_obj += "snoo.png,";
+	
+	str temp_photo;
+	std::ifstream my_file(photo.c_str());
+	
+	getline(my_file, temp_photo);
+	
+	my_obj += temp_photo;
+	
 	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
 }
+
+/*
+--------------
+---------------
+ORIENTADO
+	A
+		ESTRUCTURAS
+----------------
+---------------
+*/
 
 void send_orientado_estruct(int ConnectFD){
 	str my_obj;
@@ -121,6 +218,13 @@ void send_orientado_estruct(int ConnectFD){
 	my_obj += "044 Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2\n";
 	my_obj += "0\n";
 	my_obj += "091 Peruvian computer science student. Currently taking the networks and communications course.\n";
+	my_obj += "10 snoo.png\n";
+	
+	str temp_photo;
+	std::ifstream my_file(photo.c_str());
+	
+	getline(my_file, temp_photo);
+	
 	int n = write(ConnectFD, my_obj.c_str(), my_obj.size());
 }
 
@@ -129,8 +233,8 @@ void send_msg(int ConnectFD){
 	str sign;
 	char buffer[5];
 	std::cout << "Ingrese un numero segun el caso\n";
-	std::cout << "1. Struct completo.\n2. Orientado a comandos.\n3.Orientado a estructuras.\n";
-	std::cout << "4. JSON\n5.XML\n6.CSV\n";
+	std::cout << "1. Orientado a comandos.\n2. Orientado a estructuras.\n";
+	std::cout << "3. JSON\n4. XML\n5. CSV\n6. Struct completo.\n";
 	do{
 	std::cin >> n;
 	sign = std::to_string(n);
@@ -140,42 +244,34 @@ void send_msg(int ConnectFD){
 	printf("Server: [%s]\n", buffer);
 	switch(n){
 	case 1:
-		send_msg_struct(ConnectFD);
-		break;
-	case 2:
 		printf("Sending orientado a comandos\n");
 		send_orientado_comandos(ConnectFD);
 		break;
-	case 3:
+	case 2:
+		printf("Sending orientado a estructuras\n");
 		send_orientado_estruct(ConnectFD);
 		break;
-	case 4:
+	case 3:
+		printf("Sending JSON\n");
 		send_JSON(ConnectFD);
 		break;
-	case 5:
+	case 4:
+		printf("Sending XML\n");
 		send_XML(ConnectFD);
 		break;
-	case 6:
+	case 5:
+		printf("Sending CSV\n");
 		send_csv(ConnectFD);
 		break;
+	case 6:
+		send_msg_struct(ConnectFD);
+		break;
 	case 7:
+		printf("Bye\n");
 		exit_prog = true;
 		break;
 	}
 	}while(!exit_prog);
-}
-
-void rcv_msg(){
-    int n;
-	do{	
-	bzero(buffer,256);
-    n = read(SocketFD,buffer,255);
-   	if (n < 0) perror("ERROR reading from socket");
-	buffer[n] = '\0';
-   	//printf("Here is the message: [%s]\n",buffer);
-	printf("[%s]\n",buffer);
-	n = write(SocketFD,"Ok. Message recieved.",21); 
-	} while(1);
 }
  
 int main(void){
@@ -186,14 +282,17 @@ int main(void){
 	strcpy(Renato.address, "Urb. Santo Domingo Segunda Etapa B-3 Dpto. 2");	
 	strcpy(Renato.profession, "Computer Science");
 	strcpy(Renato.bio, "Peruvian computer science student. Currently taking the networks and communications course.");
+	strcpy(Renato.photo_name, "snoo.png");
 	Renato.DNI = 72221876;
 	
 	str temp_photo;
+	std::ifstream my_file(photo.c_str());
 	
 	getline(my_file, temp_photo);
 	strcpy(Renato.photo, temp_photo.c_str());
 	
-	//std::cout << Renato.photo << std::endl;
+	//my_file.close();
+	
     struct sockaddr_in stSockAddr;
     int Res;
     SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);

@@ -1,5 +1,13 @@
 /* Server code in C++ */
 
+//All 6 structures included
+//1: orientado a estructuras
+//2: orientado a comandos
+//3: JSON
+//4: XML
+//5: CSV
+//6: struct
+
 //g++ server.cpp -o server -std=c++11 -lpthread
  
 #include <sys/types.h>
@@ -17,6 +25,7 @@
 #include <string>
 
 //recieve message parses the message recieved
+//according to the format of the object
 
 typedef std::string str;
 
@@ -35,6 +44,8 @@ struct User{
 	char profession[99];
 	char bio[999];
 	char photo[300000];
+	char photo_name[99];
+	
 	unsigned int DNI;
 	
 	void print(){
@@ -43,14 +54,26 @@ struct User{
 		printf("Address: %s\n", this->address);
 		printf("Profession: %s\n", this->profession);
 		printf("Bio: %s\n", this->bio);
+		printf("Photo name: %s\n", this->photo_name);
 	}
 };
+
+/////STRUCT///////////
 
 void rcv_msg(int ConnectFD){ //struct
 	User my_user;
 	recv(ConnectFD, &my_user, sizeof(my_user), 0);
 	my_user.print();
 }
+
+/*
+---------------
+ORIENTADO
+	A
+		COMANDOS
+----------------
+---------------
+*/
 
 str get_type(char* message, int& index, str& value){
 	str type;
@@ -73,7 +96,7 @@ void rcv_msg_comandos(int ConnectFD){
 	str type, value;
 	User my_user;
 	int n = read(ConnectFD, buffer, 303393);
-	std::cout << "message: " << buffer << std::endl;
+	//std::cout << "message: " << buffer << std::endl;
 	buffer[n] = '\0';
 	int i = 0;
 	while(buffer[i] != '\0'){
@@ -90,15 +113,27 @@ void rcv_msg_comandos(int ConnectFD){
 			strcpy(my_user.DOB, value.c_str());
 		else if (type == "name")
 			strcpy(my_user.name, value.c_str());
-		else if (type == "photo")
+		else if (type == "photo"){
+			printf("Photo %d\n", value.size());
 			strcpy(my_user.photo, value.c_str());
+		}
 		else if (type == "profession")
 			strcpy(my_user.profession, value.c_str());
 		else if (type == "surname")
 			strcpy(my_user.surname, value.c_str());			
+		else if (type == "photo_name")
+			strcpy(my_user.photo_name, value.c_str());
 	}
 	my_user.print();
 }
+
+/*
+--------------
+---------------
+JSON
+----------------
+---------------
+*/
 
 str get_JSON_type(char* message, int& index, str& value){
 	str type;
@@ -152,10 +187,20 @@ void rcv_msg_JSON(int ConnectFD){
 		else if (type == "profession")
 			strcpy(my_user.profession, value.c_str());
 		else if (type == "surname")
-			strcpy(my_user.surname, value.c_str());			
+			strcpy(my_user.surname, value.c_str());	
+		else if (type == "photo_name")
+			strcpy(my_user.photo_name, value.c_str());
 	}
 	my_user.print();
 }
+
+/*
+--------------
+---------------
+XML
+----------------
+---------------
+*/
 
 str get_XML_type(char* message, int& index, str& value){
 	str type;
@@ -210,13 +255,23 @@ void rcv_msg_XML(int ConnectFD){
 		else if (type == "profession")
 			strcpy(my_user.profession, value.c_str());
 		else if (type == "surname")
-			strcpy(my_user.surname, value.c_str());			
+			strcpy(my_user.surname, value.c_str());
+		else if (type == "photo_name")
+			strcpy(my_user.photo_name, value.c_str());
 	}
 	my_user.print();
 }
 
+/*
+--------------
+---------------
+CSV
+----------------
+---------------
+*/
+
 void rcv_msg_csv(int ConnectFD){
-	//name,initial,surname,dob,dni,address,profession,bio,photo
+	//name,initial,surname,dob,dni,address,profession,bio,photo_name,photo
 	char buffer[303393];
 	bzero(buffer, 303393);
 	str value;
@@ -246,12 +301,24 @@ void rcv_msg_csv(int ConnectFD){
 			strcpy(my_user.profession, value.c_str());
 		else if (cur_iteration == 7)
 			strcpy(my_user.bio, value.c_str());
+		else if (cur_iteration == 8)
+			strcpy(my_user.photo_name, value.c_str());
 		else
 			strcpy(my_user.photo, value.c_str());
 		cur_iteration++;
 	}
 	my_user.print();
 }
+
+/*
+--------------
+---------------
+ORIENTADO
+	A
+		ESTRUCTURAS
+----------------
+---------------
+*/
 
 void rcv_msg_estructuras(int ConnectFD){
 	char buffer[303393];
@@ -362,6 +429,19 @@ void rcv_msg_estructuras(int ConnectFD){
 			i = j;
 			strcpy(my_user.bio, value.c_str());
 			i++; //newline
+		} else if (cur_iteration == 8){
+			size_str = buffer[i];
+			size_str += buffer[i+1];
+			size = stoi(size_str);
+			
+			i += 2;
+			if (buffer[i] == ' ') i++;
+			for(j = i; j < (i + size); j++){
+				value += buffer[j];
+			}
+			i = j;
+			strcpy(my_user.photo_name, value.c_str());
+			i++; //newline
 		}
 		else{
 			strcpy(my_user.photo, value.c_str());
@@ -386,47 +466,33 @@ void recieve_msg(int ConnectFD){
 		n = stoi(num);
 		write(ConnectFD, "OK.", 3);
 		switch(n){
-		case 1:
-			printf("Whole struct\n");
+		case 6:
+			printf("Whole struct recieved\n");
 			rcv_msg(ConnectFD);
 			break;
-		case 2:
+		case 1:
 			printf("Comandos\n");
 			rcv_msg_comandos(ConnectFD);
 			break;
-		case 3:
+		case 2:
 			printf("Estructuras\n");
 			rcv_msg_estructuras(ConnectFD);
 			break;
-		case 4:
-			printf("JSON\n");
+		case 3:
+			printf("JSON recieved\n");
 			rcv_msg_JSON(ConnectFD);
 			break;
-		case 5:
-			printf("XML\n");
+		case 4:
+			printf("XML recieved\n");
 			rcv_msg_XML(ConnectFD);
 			break;
-		case 6:
-			printf("CSV\n");
+		case 5:
+			printf("CSV recieved\n");
 			rcv_msg_csv(ConnectFD);
 			break;
 		}
 		printf("\n");
 	}while(1);
-}
-
-void send_msg(){
-	char msg[256];
-	int n;
-	do{
-		std::cin.getline(msg, 255);
-		str opt_write;
-		int option;
-		opt_write = msg[0];
-		option = atoi(opt_write.c_str());
-		
-		msg[n] = '\0';
-	} while(1);
 }
 
 int main(void){
@@ -473,16 +539,8 @@ int main(void){
       	}
  
      /* perform read write operations ... */
-		//std::thread t1(rcv_msg, Client_connectFD);
-		//std::thread t1(rcv_msg_comandos, Client_connectFD);
-		//std::thread t1(rcv_msg_JSON, Client_connectFD);
-		//std::thread t1(rcv_msg_XML, Client_connectFD);
-		//std::thread t1(rcv_msg_csv, Client_connectFD);
-		//std::thread t1(rcv_msg_estructuras, Client_connectFD);
 		std::thread t1(recieve_msg, Client_connectFD);
-     	//std::thread t2(send_msg);
 		t1.detach();
-		//t2.detach();
  
       //shutdown(ConnectFD, SHUT_RDWR);
  

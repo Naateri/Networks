@@ -1,0 +1,10 @@
+(Mensaje tambien usado para probar el programa, por eso no hay tildes)
+
+Abrir conexion: simplemente mandar puerto (ej: 45001)
+Llega mensaje de confirmacion que se abrio dicho puerto.
+
+Luego:
+
+1 archivo.txt => GET del archivo
+2 archivo.txt mensaje que se quiera poner => PUT mas mensaje
+3 => Close
